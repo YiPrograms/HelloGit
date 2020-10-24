@@ -1,1 +1,4 @@
-asidasd
+#include<stdio.h>
+int main(){
+    printf("2rjurru");
+}
