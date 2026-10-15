@@ -26,6 +26,18 @@ SwitchDesktop(direction) {
     Send(direction < 0 ? "#^{Left}" : "#^{Right}")
 }
 
+GetForegroundHwnd() {
+    ; GetForegroundWindow can briefly return 0 during shell focus changes.
+    Loop 5 {
+        hwnd := DllCall("GetForegroundWindow", "Ptr")
+        if hwnd
+            return hwnd
+        Sleep(20)
+    }
+
+    return 0
+}
+
 MoveWindowAndFollow(direction) {
     global GetCurrentDesktopNumberProc, MoveWindowToDesktopNumberProc
 
@@ -36,7 +48,10 @@ MoveWindowAndFollow(direction) {
     if target < 0 || target >= count
         return
 
-    hwnd := WinGetID("A")
+    hwnd := GetForegroundHwnd()
+    if !hwnd
+        return
+
     result := DllCall(MoveWindowToDesktopNumberProc, "Ptr", hwnd, "Int", target, "Int")
 
     if result = -1
@@ -85,4 +100,8 @@ DesktopChanged(oldDesktop, newDesktop, *) {
 #t::Run("wt.exe")
 
 ; Gracefully close the active window.
-#q::WinClose("A")
+#q:: {
+    hwnd := GetForegroundHwnd()
+    if hwnd
+        WinClose("ahk_id " hwnd)
+}
